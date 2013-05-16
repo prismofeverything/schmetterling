@@ -3,7 +3,7 @@
 (defn inner-handler
   [request]
   (let [a 5
-        b 1
+        b 0
         q (/ a b)]
     (println "!!!" q)
     {:status 200 :body (str q)}))

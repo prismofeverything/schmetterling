@@ -1,6 +1,7 @@
 (ns schmetterling.repl
   (:require [clojure.tools.nrepl :as repl]
             [ritz.nrepl :as ritz]
+            [ritz.debugger.break :as break]
             [leiningen.core.project :as project]
             [leiningen.ritz-nrepl :as lein-ritz]))
 
@@ -12,9 +13,26 @@
        :repl-options
        {:host host :port (str port)}))))
 
+(defn schmetterling-request?
+  [request prefix]
+  ())
+
 (defn read-values
   [responses]
   (map repl/read-response-value responses))
+
+(defn- ^ThreadGroup get-root-group
+  [^java.lang.ThreadGroup tg]
+  (if-let [parent (.getParent tg)]
+    (recur parent)
+    tg))
+
+(defn- get-thread-list
+  []
+  (let [rg (get-root-group (.getThreadGroup (Thread/currentThread)))
+        arr (make-array Thread (.activeCount rg))]
+    (.enumerate rg arr true)
+    (seq arr)))
 
 (defn combine-responses
   [responses]
@@ -33,39 +51,84 @@
       response part))
    {} responses))
 
-(defn handle-error
+(defn message
+  [connection msg]
+  (println "SENDING" (str msg))
+  (-> (repl/client connection 1000)
+      (repl/message msg)
+      (read-values)))
+
+(defn print-response
   [response]
-  (let [body (:err response)]
-    {:status 200 :body body}))
+  (doseq [res response]
+    (println "FULL RESPONSE" res)))
+
+(defn handle-error
+  [response connection]
+  (println "CONNECTION" (str connection))
+  (let [;; body (:err response)
+        thread-id "5482"
+
+        ;; threads (get-thread-list)
+        ;; _ (doseq [thread threads]
+        ;;     (println "THREAD" (.getId thread) (.getName thread)))
+
+        info (message
+              connection
+              {:op "debugger-info"
+               :thread-id thread-id})
+        _ (print-response info)
+
+        frame (message
+               connection
+               {:op "frame-source"
+                :frame-number "1"
+                :thread-id thread-id})]
+    (print-response frame)
+    {:status 200 :body "ERROR"}))
 
 (defn handle-response
-  [response]
+  [response connection]
   (println "RESPONSE" (str (doall response)))
+  (if-let [out (:out response)]
+    (println out))
   (cond
-   ((:status response) "eval-error") (handle-error response)
+   (empty? response) (handle-error response connection)
+   ((:status response) "eval-error") (handle-error response connection)
    :else (first (:value response))))
 
 (defn wrap-schmetterling
-  [namespace action host port]
-  (let [remote-handler (str namespace "/" action)
-        server (Thread. #(start-ritz host port))
-        connection (atom nil)]
-    (.start server)
-    (fn [request]
-      (try
-        (do
-          (if-not @connection
-            (reset! connection (repl/connect :port port)))
-          (let [pruned (dissoc request :body)
-                required (str "(require :reload '" namespace ")")
-                code (str "(" remote-handler " " (str pruned) ")")
-                response (-> (repl/client @connection 1000)
-                             (repl/message {:op "eval" :code (str required code)})
-                             (read-values)
-                             (combine-responses))]
-            (handle-response response)))
-        (catch java.net.ConnectException failed-connection
-          (require :reload (symbol namespace))
-          (update-in
-           ((ns-resolve (symbol namespace) (symbol action)) request)
-           [:body] #(str "Schmetterling still emerging... " %)))))))
+  ([namespace] (wrap-schmetterling namespace 'handler))
+  ([namespace action] (wrap-schmetterling namespace action "localhost"))
+  ([namespace action host] (wrap-schmetterling namespace action host 15351))
+  ([namespace action host port] (wrap-schmetterling namespace action host port "/_schmetterling"))
+  ([namespace action host port prefix]
+     (let [remote-handler (symbol (str namespace "/" action))
+           server (Thread. #(start-ritz host port))
+           connection (atom nil)]
+       (.start server)
+       (fn [request]
+         (if (= "/favicon.ico" (:uri request))
+           {:status 200 :body ""}
+           (try
+             (do
+               (if-not @connection
+                 (let [connect (repl/connect :port port)
+                       response (message connect {:op "break-on-exception"})]
+                   (doseq [res response]
+                     (println "BREAK ON EXCEPTION RESPONSE" res))
+                   (reset! connection connect)))
+               (let [pruned (dissoc request :body)
+                     required `(require :reload '~namespace)
+                     code (list remote-handler pruned)
+                     _ (println "CODE" (pr code))
+                     response (message @connection {:op "eval" :code (pr-str `(do ~required ~code))})
+                     _ (doseq [res response]
+                         (println "RAW RESPONSE" (str res)))
+                     response (combine-responses response)]
+                 (handle-response response @connection)))
+             (catch java.net.ConnectException failed-connection
+               (require :reload (symbol namespace))
+               (update-in
+                ((ns-resolve (symbol namespace) (symbol action)) request)
+                [:body] #(str "Schmetterling still emerging... " %)))))))))
