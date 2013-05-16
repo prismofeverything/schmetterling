@@ -1,12 +1,11 @@
 (ns schmetterling.core
-  (:require [schmetterling.repl :as repl]
-            [ring.middleware.reload :as reload]))
+  (:require [schmetterling.debug :as debug]))
 
 (declare handler)
 
 (defn init
   []
-  (def handler (repl/wrap-schmetterling 'schmetterling.inner 'handler "localhost" 15351)))
+  (def handler (debug/wrap-schmetterling 'schmetterling.inner 'handler "localhost" 15351)))
 
 (def successful-response
   ({:id "bc582548-18e3-4a83-92d3-42579b5a6b5d"
