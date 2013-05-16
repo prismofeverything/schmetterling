@@ -1,6 +1,7 @@
 (ns schmetterling.debug
   (:require [ritz.debugger.break :as break]
-            [ritz.debugger.inspect :as inspect]
+            [ritz.debugger.connection :as connection]
+            [ritz.debugger.exception-filters :as exception-filters]
             [ritz.logging :as log]
             [ritz.jpda.jdi :as jdi]
             [ritz.jpda.jdi-vm :as jdi-vm]
@@ -9,26 +10,81 @@
             [leiningen.core.classpath :as classpath]
             [leiningen.core.project :as project]))
 
-(defn reference-fields
-  [object-reference]
-  (let [reference-type (.referenceType object-reference)
-        fields (.allFields reference-type)]
-    fields))
+(defn make-connection
+  [context]
+  (let [connection (assoc connection/default-connection
+                     :vm-context context
+                     :type :ring)]
+    (exception-filters/exception-filters-set!
+     connection
+     (or (exception-filters/read-exception-filters)
+         exception-filters/default-exception-filters))
+    connection))
+
+(defn break-on-exception
+  [connection flag]
+  (if flag
+    (do
+      (swap!
+       (:debug connection)
+       assoc-in [:breakpoint :msg] (-> connection :msg))
+      (swap!
+       (:debug connection)
+       assoc-in [:breakpoint :break] flag)
+      (jdi/enable-exception-request-states (-> connection :vm-context :vm)))
+    (do
+      (jdi/disable-exception-request-states (-> connection :vm-context :vm))
+      (swap! (:debug connection) assoc-in [:breakpoint :break] flag)))
+  (connection/debug-context connection))
+
+(defn stacktrace-frames
+  [frames start]
+  (map
+   #(list
+     %1
+     (format "%s (%s:%s)" (:function %2) (:source %2) (:line %2))
+     (list :stratum (:stratum %2)))
+   (iterate inc start)
+   frames))
+
+(defn debugger-data
+  [{:keys [thread thread-id condition event restarts] :as level-info}
+   level frame-min frame-max]
+  `("exception" ~(list (:message condition "No message")
+                       (:type condition ""))
+    "thread-id" ~thread-id
+    "frames" ~(vec (stacktrace-frames (debug/build-backtrace thread) frame-min))
+    "restarts" ~(vec (map
+                      (fn [{:keys [name description]}]
+                        (list name description))
+                      restarts))
+    "level" ~level))
+
+(defmethod debug/display-break-level :ring
+  [{:keys [vm-context] :as connection}
+   {:keys [thread thread-id condition event restarts] :as level-info}
+   level]
+  (log/trace "ring display-break-level: thread-id %s level %s" thread-id level)
+  (when-let [debug-context (connection/debug-context connection)]
+    (let [value (debugger-data level-info level 0 100)]
+      (log/trace (str "DEBUGGER INFO: " value)))))
 
 (defn handle-exception
-  [context message]
-  (println (str context))
-  {:status 200 :body (str "ERROR: " message)})
+  [connection message]
+  (let [breaks (break/break-threads connection)]
+    (println "CONNECTION" (str connection))
+    (doseq [break breaks] (println "BREAK THREAD" break))
+    {:status 200 :body (str "ERROR: " message)}))
 
 (defn signal
-  [context message]
+  [{:keys [vm-context] :as connection} message]
   (try 
-    (let [response (jdi-clj/control-eval-to-value context message)
+    (let [response (jdi-clj/control-eval-to-value vm-context message)
           value (read-string (.value response))]
       (println "RESPONSE" (str value))
       value)
     (catch com.sun.jdi.InvocationException e
-      (handle-exception context message))))
+      (handle-exception connection message))))
 
 (defn wrap-schmetterling
   ([namespace] (wrap-schmetterling namespace 'handler))
@@ -44,16 +100,16 @@
                      :main `@(promise)
                      :jvm-opts ["-Djava.awt.headless=true"
                                 "-XX:+TieredCompilation"]})
-           connection (atom nil)]
+           connection (make-connection context)]
+       (break-on-exception connection true)
        (jdi-vm/vm-resume context)
-       (jdi/enable-exception-request-states (:vm context))
-       (println "THREADS" (str (debug/threads context)))
        (fn [request]
+         (println "THREADS" (str (debug/threads context)))
          (if (= "/favicon.ico" (:uri request))
            {:status 200 :body ""}
            (let [pruned (dissoc request :body)
                  required `(require :reload '~namespace)
                  code `(pr-str (~remote-handler ~pruned))
                  _ (println "CODE" (pr-str code))
-                 response (signal context `(do ~required ~code))]
+                 response (signal connection `(do ~required ~code))]
              response))))))
