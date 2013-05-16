@@ -104,6 +104,7 @@
        (break-on-exception connection true)
        (debug/add-exception-event-request context)
        (debug/add-connection-for-event-fn! (fn [_] connection))
+       (debug/add-all-connections-fn! (fn [_] [connection]))
        (jdi-vm/vm-resume context)
        (fn [request]
          (println "THREADS" (str (debug/threads context)))
