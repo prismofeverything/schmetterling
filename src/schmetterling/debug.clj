@@ -10,6 +10,8 @@
             [leiningen.core.classpath :as classpath]
             [leiningen.core.project :as project]))
 
+(def ritz-connection (atom {}))
+
 (defn make-connection
   [context]
   (let [connection (assoc connection/default-connection
@@ -36,6 +38,14 @@
       (jdi/disable-exception-request-states (-> connection :vm-context :vm))
       (swap! (:debug connection) assoc-in [:breakpoint :break] flag)))
   (connection/debug-context connection))
+
+(defn thread-data
+  [^Thread thread]
+  {:id (.getId thread)
+   :name (.getName thread)
+   :state (.getState thread)
+   :alive? (.isAlive thread)
+   :interrupted? (.isInterrupted thread)})
 
 (defn stacktrace-frames
   [frames start]
@@ -86,6 +96,9 @@
     (catch com.sun.jdi.InvocationException e
       (handle-exception connection message))))
 
+(debug/add-connection-for-event-fn! (fn [_] @ritz-connection))
+(debug/add-all-connections-fn! (fn [_] [@ritz-connection]))
+
 (defn wrap-schmetterling
   ([namespace] (wrap-schmetterling namespace 'handler))
   ([namespace action] (wrap-schmetterling namespace action "localhost"))
@@ -101,13 +114,14 @@
                      :jvm-opts ["-Djava.awt.headless=true"
                                 "-XX:+TieredCompilation"]})
            connection (make-connection context)]
+       (reset! ritz-connection connection)
        (break-on-exception connection true)
        (debug/add-exception-event-request context)
-       (debug/add-connection-for-event-fn! (fn [_] connection))
-       (debug/add-all-connections-fn! (fn [_] [connection]))
        (jdi-vm/vm-resume context)
        (fn [request]
-         (println "THREADS" (str (debug/threads context)))
+         (doseq [thread (debug/thread-list context)]
+           (println "THREAD" (str thread)))
+         (println "event thread" (str (-> context :vm-ev thread-data)))
          (if (= "/favicon.ico" (:uri request))
            {:status 200 :body ""}
            (let [pruned (dissoc request :body)
