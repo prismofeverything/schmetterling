@@ -76,4 +76,3 @@
   (set! (.-onload js/window) init!))
 
 (connect/connect)
-

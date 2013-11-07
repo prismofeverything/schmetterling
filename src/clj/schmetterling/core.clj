@@ -15,7 +15,7 @@
    :headers {"Content-Type" "text/html"}
    :body (slurp (io/resource "public/index.html"))})
 
-(defn handler 
+(defn handler
   [request]
   (httpkit/with-channel request channel
     (httpkit/on-close channel (fn [status] (println "Socket closing:" status)))
