@@ -50,14 +50,14 @@
 (defn make-sender
   []
   (log "HELLO")
-  (event-chan send :connect (css/sel "input#connection") :keypress)
+  (event-chan send :port (css/sel "input#port") :keypress)
   (go
    (while true
      (let [[id event] (<! send)]
        (log event)
        (cond
-        (and (= id :connect) (= 13 (key-code event)))
-        (let [port (input-value "input#connection")]
+        (and (= id :port) (= 13 (key-code event)))
+        (let [port (input-value "input#port")]
           (.send ws {:op :connect :port port})))))))
 
 (defn make-receiver []
