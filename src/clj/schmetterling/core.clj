@@ -23,13 +23,25 @@
        port
        (fn [e stack]
          (httpkit/send! 
-          channel (pr-str {:op :exception :stack stack :exception (str e)})))))
+          channel (pr-str {:op :exception :stack stack :exception (str e)}))))
+      {:op :connected 
+       :port port})
     (catch Exception e (println "something wrong with" data e))))
+
+(defn eval-expression
+  [channel {:keys [expression level] :as data}]
+  (println "eval:" (str data))
+  (let [form (edn/read-string expression) 
+        result (debug/reval form level)]
+    (println "result:" result)
+    (assoc data :result result)))
 
 (defn dispatch
   [channel data]
   (condp = (:op data)
-    :connect (connect channel data)))
+    :connect (connect channel data)
+    :eval (eval-expression channel data)
+    {:op :unsupported}))
 
 (defn handler
   [request]
