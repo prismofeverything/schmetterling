@@ -47,6 +47,11 @@
   [type class level]
   (tag type (str class "-" level) class))
 
+(defn code-template
+  [inner]
+  [:pre {:class "brush: clj"} 
+   [:code inner]])
+
 (defn frame-template
   [frame level]
   [(frame-tag :div "frame" level)
@@ -62,10 +67,10 @@
     (map frame-template stack (range))]])
 
 (defn result-template
-  [expression result]
+  [expression result output]
   [:div.eval-result
-   [:div.result-expression ">>> " (str expression)]
-   [:div.result-content (str result)]])
+   [:div.result-expression (code-template (str ">>> " expression))]
+   [:div.result-content (code-template output)]])
 
 (defn handle-exception
   [{:keys [stack exception] :as data}]
@@ -78,11 +83,14 @@
        :keypress {:level level}))))
 
 (defn print-result
-  [{:keys [expression level result] :as data}]
+  [{:keys [expression level result output] :as data}]
   (log result)
-  (let [result-node (result-template expression result)
-        el (css/sel (str "div#frame-response-" level))]
-    (dom/append! el (sing/render result-node))))
+  (log output)
+  (let [result-node (result-template expression result output)
+        el (css/sel (str "div#frame-response-" level))
+        code (sing/render result-node)]
+    (dom/append! el code)
+    (.highlightBlock js/hljs code)))
 
 (defn dispatch-message
   []

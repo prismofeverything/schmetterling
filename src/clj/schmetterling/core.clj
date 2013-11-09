@@ -3,6 +3,7 @@
         [ring.middleware.reload :only (wrap-reload)])
   (:require [clojure.edn :as edn] 
             [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
             [org.httpkit.server :as httpkit] 
             [polaris.core :as polaris]
             [schmetterling.debug :as debug]))
@@ -34,7 +35,9 @@
   (let [form (edn/read-string expression) 
         result (debug/reval form level)]
     (println "result:" result)
-    (assoc data :result result)))
+    (assoc data 
+      :result result
+      :output (with-out-str (pprint/pprint result)))))
 
 (defn dispatch
   [channel data]

@@ -1,15 +1,19 @@
 <html>
   <head>
-    <style>
-      .rect {
-        position: absolute;
-        background-color: red;
-      }
-    </style>
+    <meta charset="utf-8">
+    <title>SCHMETTERLING</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link href="/css/schmetterling.css" type="text/css" rel="stylesheet">
+    <link href="/css/highlight/rainbow.css" type="text/css" rel="stylesheet">
+    <script type="text/javascript" src="/js/highlight/highlight.pack.js"></script>
+    <link rel="shortcut icon" href="/img/favicon.png">
   </head>
   <body>
     <label for="host">host</label><input id="host" type="text" value="localhost"></input>
     <label for="port">port</label><input id="port" type="text"></input>
+    <div id="notifications"></div>
     <div id="stack"></div>
     <script src="/js/app/schmetterling.js"></script>
   </body>
