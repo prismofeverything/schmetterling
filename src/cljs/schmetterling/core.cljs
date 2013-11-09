@@ -52,17 +52,34 @@
   [:pre {:class "brush: clj"} 
    [:code inner]])
 
+(defn frame-info-template
+  [frame]
+  [:div.frame-info
+   "In "
+   [:span.frame-file (:file frame)]
+   [:span.frame-line " line " (:line frame) ": "]
+   [:span.frame-namespace (:namespace frame)]
+   (if-not (empty? (:function frame))
+     [:span.frame-function "/" (:function frame)])
+   [:span.frame-method " " (:method frame)]])
+
 (defn frame-template
   [frame level]
   [(frame-tag :div "frame" level)
-   frame
+   (frame-info-template frame)
    [(frame-tag :div "frame-response" level)]
-   [(frame-tag :input "frame-eval" level) {:type "text"}]])
+   [(frame-tag :div "frame-eval" level) [:pre.prompt ">>> "]
+    [(frame-tag :input "frame-input" level) {:type "text"}]]])
 
 (defn stack-template
   [stack exception]
   [:div#display
-   [:div#exception exception]
+   [:div.exception
+    [:span.exception-announcement "Exception! in "] 
+    [:span.exception-class (:class exception)]
+    " line " 
+    [:span.exception-line (:line exception)]
+    ": " [:span.exception-content (:exception exception)]]
    [:div#frames 
     (map frame-template stack (range))]])
 
@@ -72,6 +89,11 @@
    [:div.result-expression (code-template (str ">>> " expression))]
    [:div.result-content (code-template output)]])
 
+(defn announce-connection
+  [data]
+  (let [announcement [:span#connected (str "connected on port " (:port data))]]
+    (dom/append! (css/sel "div#connection") (sing/render announcement))))
+
 (defn handle-exception
   [{:keys [stack exception] :as data}]
   (let [frames (stack-template stack exception)]
@@ -79,7 +101,7 @@
     (doseq [level (range (count stack))]
       (event-chan 
        send :eval 
-       (css/sel (str "input#frame-eval-" level))
+       (css/sel (str "input#frame-input-" level))
        :keypress {:level level}))))
 
 (defn print-result
@@ -100,7 +122,7 @@
            raw (.-data msg)
            data (reader/read-string raw)]
        (condp = (:op data)
-         :connected (log (str "connected on port " (:port data) "!"))
+         :connected (announce-connection data)
          :exception (handle-exception data)
          :eval (print-result data)
          (log (str "op not supported! " data)))))))
@@ -119,7 +141,7 @@
                    (.send ws {:op :connect :port port})))
          :eval (if (= 13 (key-code event)) 
                  (let [level (:level data)
-                       el (str "input#frame-eval-" level)
+                       el (str "input#frame-input-" level)
                        expression (input-value el)]
                    (.send ws {:op :eval 
                               :level level 

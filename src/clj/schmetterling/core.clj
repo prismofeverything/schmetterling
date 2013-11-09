@@ -3,6 +3,7 @@
         [ring.middleware.reload :only (wrap-reload)])
   (:require [clojure.edn :as edn] 
             [clojure.java.io :as io]
+            [clojure.string :as string]
             [clojure.pprint :as pprint]
             [org.httpkit.server :as httpkit] 
             [polaris.core :as polaris]
@@ -16,6 +17,28 @@
    :headers {"Content-Type" "text/html"}
    :body (slurp (io/resource "public/index.html"))})
 
+(defn parse-exception-event
+  [e]
+  (let [[_ class line] (re-find #".+@(.+):([^ ]+)" (str e))
+        exception (.exception e)]
+    {:class class
+     :line line
+     :exception (str exception)}))
+
+(defn parse-frame
+  [frame]
+  (println frame)
+  (if-let [[_ namespace f args file line]
+           (re-find #"([^ ]+) ([^ ]+) \[(.*)\] (.+):(.+)" frame)]
+    (let [args (string/split args #" ")
+          [function method] (string/split f #"\$")]
+      {:namespace namespace
+       :function function
+       :method method
+       :args args
+       :file file
+       :line line})))
+
 (defn connect
   [channel {:keys [port] :as data}]
   (try
@@ -23,8 +46,12 @@
       (debug/attach 
        port
        (fn [e stack]
-         (httpkit/send! 
-          channel (pr-str {:op :exception :stack stack :exception (str e)}))))
+         (let [event (parse-exception-event e)
+               frames (mapv parse-frame stack)]
+           (httpkit/send! 
+            channel (pr-str {:op :exception 
+                             :stack frames
+                             :exception event})))))
       {:op :connected 
        :port port})
     (catch Exception e (println "something wrong with" data e))))

@@ -42,6 +42,72 @@ table {
 	border-spacing: 0;
 }
 
+body {
+  font-family: verdana;
+  background: #eec;
+}
+
+input {
+  font-family: monospace;
+  font-size: 13px;
+  border: none;
+  background-color: #eec;
+  color: #474949;
+}
+
 code {
   font-family: monospace;
+}
+
+#connection {
+  background: #474949;
+  color: #ccc;
+  padding: 15px;
+}
+
+#connected {
+  color: #c8d;
+  /* border: 1px solid #eee; */
+  padding: 5px 15px;
+  margin-left: 5px;
+  background-color: #000;
+}
+
+.exception {
+  padding: 15px;
+  background: #cc3333;
+  color: #ccc;
+}
+
+.exception-class {
+  color: #aae;
+}
+
+.exception-line {
+  color: #8e8;
+}
+
+.frame {
+  padding-top: 15px;
+}
+
+.frame-info {
+  padding: 0px 15px 10px;
+}
+
+.frame-eval {
+  padding: 0.5em;
+  background: #474949;
+  color: #ccc;
+  font-family: monospace;
+}
+
+.frame-input {
+  border: none;
+  background: #474949;
+  color: #ccc;
+}
+
+.prompt {
+  display: inline;
 }

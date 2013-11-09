@@ -1,14 +1,16 @@
 # schmetterling
 
-Debug ring handlers from inside the browser!
+Debug running clojure processes from the browser!
 
 ## Usage
 
-```clj
-(wrap-schmetterling 'handler.namespace 'handler)
-```
+To start a Schmetterling process:
 
-Then in your handler: (/ 1 0) and enjoy the seamless debugging!
+    lein run
+    
+Then connect to an existing process by providing its dt_socket port.  When an exception arises in the process being watched it will break and control will be passed to Schmetterling.  
+
+There is a repl for each frame in the stacktrace.
 
 ## License
 
