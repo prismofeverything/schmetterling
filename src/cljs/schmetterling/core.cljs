@@ -92,7 +92,8 @@
 (defn announce-connection
   [data]
   (let [announcement [:span#connected (str "connected on port " (:port data))]]
-    (dom/append! (css/sel "div#connection") (sing/render announcement))))
+    (dom/append! (css/sel "div#connection") (sing/render announcement))
+    (dom/set-styles! (css/sel "span#connected") {:width 500})))
 
 (defn handle-exception
   [{:keys [stack exception] :as data}]

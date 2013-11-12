@@ -44,14 +44,19 @@ table {
 
 body {
   font-family: verdana;
-  background: #eec;
+  background: aede8a;
+  /* background: a2e35d; */
+  /* background: a4e683; */
+  /* background: a7cc5e; */
+  /* background: #eec; */
 }
 
 input {
   font-family: monospace;
   font-size: 13px;
   border: none;
-  background-color: #eec;
+  /* background: a7cc5e; */
+  background-color: #6ec8e6;
   color: #474949;
 }
 
@@ -65,6 +70,11 @@ code {
   padding: 15px;
 }
 
+#connection input {
+  font-family: monaco;
+  font-weight: bold;
+}
+
 #connected {
   color: #c8d;
   /* border: 1px solid #eee; */
@@ -75,7 +85,10 @@ code {
 
 .exception {
   padding: 15px;
-  background: #cc3333;
+  /* background: #f28911; */
+  /* background: #cc3333; */
+  /* background: #bd3c3c; */
+  background: #a11f1f;
   color: #ccc;
 }
 
@@ -92,7 +105,7 @@ code {
 }
 
 .frame-info {
-  padding: 0px 15px 10px;
+  padding: 0px 15px 15px;
 }
 
 .frame-eval {
@@ -106,6 +119,18 @@ code {
   border: none;
   background: #474949;
   color: #ccc;
+}
+
+.frame-file {
+  color: #4c0d8c;
+}
+
+.frame-line {
+  color: #224d36;
+}
+
+.frame-namespace {
+  color: #63331f;
 }
 
 .prompt {
