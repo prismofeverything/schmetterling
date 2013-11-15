@@ -44,7 +44,7 @@ table {
 
 body {
   font-family: verdana;
-  background: aede8a;
+  background: #aede8a;
   /* background: a2e35d; */
   /* background: a4e683; */
   /* background: a7cc5e; */
@@ -77,7 +77,6 @@ code {
 
 #connected {
   color: #c8d;
-  /* border: 1px solid #eee; */
   padding: 5px 15px;
   margin-left: 5px;
   background-color: #000;
@@ -93,11 +92,12 @@ code {
 }
 
 .exception-class {
-  color: #aae;
+  color: #6ec8e6;
 }
 
 .exception-line {
-  color: #8e8;
+  color: #aede8a;
+  /* color: #8e8; */
 }
 
 .frame {
@@ -123,15 +123,22 @@ code {
 }
 
 .frame-file {
-  color: #4c0d8c;
+  color: #a11f1f;
+  /* color: #963C0F; */
+  /* color: #A67012; */
 }
 
 .frame-line {
-  color: #224d36;
+  font-weight: 550;
+  color: #8322A3;
 }
 
 .frame-namespace {
-  color: #63331f;
+  color: #9C6277;
+}
+
+.locals {
+  color: #6ec8e6;
 }
 
 .prompt {

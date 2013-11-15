@@ -1,5 +1,6 @@
 (ns schmetterling.core
   (:require 
+   [clojure.string :as string]
    [cljs.core.async :refer [chan <! >! put!]]
    [cljs.reader :as reader]
    [domina :as dom]
@@ -55,20 +56,22 @@
 (defn frame-info-template
   [frame]
   [:div.frame-info
-   "In "
-   [:span.frame-file (:file frame)]
-   [:span.frame-line " line " (:line frame) ": "]
-   [:span.frame-namespace (:namespace frame)]
+   "In " [:span.frame-file (or (:filename frame) (:file frame))]
+   " line " [:span.frame-line (:line frame)]
+   ": " [:span.frame-namespace (:namespace frame)]
    (if-not (empty? (:function frame))
      [:span.frame-function "/" (:function frame)])
    [:span.frame-method " " (:method frame)]])
 
 (defn frame-template
   [frame level]
+  ;; (log (:source frame))
   [(frame-tag :div "frame" level)
    (frame-info-template frame)
-   [(frame-tag :div "frame-response" level)]
-   [(frame-tag :div "frame-eval" level) [:pre.prompt ">>> "]
+   [(frame-tag :div "frame-response" level) 
+    [(frame-tag :pre "frame-locals" level) [:code.locals (pr-str (:locals frame))]]]
+   [(frame-tag :div "frame-eval" level)
+    [:pre.prompt ">>> "]
     [(frame-tag :input "frame-input" level) {:type "text"}]]])
 
 (defn stack-template
@@ -77,8 +80,7 @@
    [:div.exception
     [:span.exception-announcement "Exception! in "] 
     [:span.exception-class (:class exception)]
-    " line " 
-    [:span.exception-line (:line exception)]
+    " line " [:span.exception-line (:line exception)]
     ": " [:span.exception-content (:exception exception)]]
    [:div#frames 
     (map frame-template stack (range))]])
@@ -92,6 +94,7 @@
 (defn announce-connection
   [data]
   (let [announcement [:span#connected (str "connected on port " (:port data))]]
+    (dom/set-value! (css/sel "input#port") (:port data))
     (dom/append! (css/sel "div#connection") (sing/render announcement))
     (dom/set-styles! (css/sel "span#connected") {:width 500})))
 
@@ -115,6 +118,13 @@
     (dom/append! el code)
     (.highlightBlock js/hljs code)))
 
+(defn init
+  [data]
+  (if (:connected? data)
+    (announce-connection data))
+  (if (:paused? data)
+    (handle-exception data)))
+
 (defn dispatch-message
   []
   (go
@@ -123,6 +133,7 @@
            raw (.-data msg)
            data (reader/read-string raw)]
        (condp = (:op data)
+         :init (init data)
          :connected (announce-connection data)
          :exception (handle-exception data)
          :eval (print-result data)
@@ -153,6 +164,10 @@
    (.-onmessage ws)
    (fn [msg]
      (put! receive msg)))
+  (set!
+   (.-onopen ws)
+   (fn [msg] 
+     (.send ws {:op :init})))
   (dispatch-message))
 
 (defn init!
