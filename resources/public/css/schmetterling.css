@@ -45,6 +45,8 @@ table {
 body {
   font-family: verdana;
   background: #aede8a;
+  /* background: #b5bd68; */
+
   /* background: a2e35d; */
   /* background: a4e683; */
   /* background: a7cc5e; */
@@ -134,11 +136,23 @@ code {
 }
 
 .frame-namespace {
-  color: #9C6277;
+  color: #474949;
+}
+
+.frame-function {
+  color: #9c6277;
+}
+
+.frame-method {
+  color: #d6721a;
 }
 
 .locals {
   color: #6ec8e6;
+}
+
+.highlight {
+  background: #770077;
 }
 
 .prompt {

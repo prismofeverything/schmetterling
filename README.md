@@ -22,6 +22,7 @@ Note the five digit port number (in this case 54330).
 
 To run Schmetterling, clone the repo and simply
 
+    lein cljsbuild once
     lein run
     
 in the Schmetterling root.  Browse to the Schmetterling frontend at

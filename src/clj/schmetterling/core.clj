@@ -19,20 +19,60 @@
    :body (slurp (io/resource "public/index.html"))})
 
 (defn parse-exception-event
-  [e]
+  [thread e]
   (let [[_ class line] (re-find #".+@(.+):([^ ]+)" (str e))
-        exception (.exception e)]
+        exception (.exception e)
+        string (debug/invoke-remote-method exception thread "toString" [])
+        value (.value string)]
     {:class class
      :line line
-     :exception (str exception)}))
+     :exception value}))
+
+(def def-beginning #"\(def")
+
+(defn get-source-line
+  [source line]
+  (try
+    (nth source (dec line))
+    (catch Exception e "(no source found)")))
+
+(defn get-surrounding-def
+  [source line]
+  (try
+    (let [line (dec line)
+          exception-line (nth source line)
+          previous (if (re-find def-beginning exception-line)
+                     (list)
+                     (loop [previous (list)
+                            line (dec line)]
+                       (let [source-line (nth source line)
+                             previous (cons source-line previous)]
+                         (if (re-find def-beginning source-line)
+                           previous
+                           (recur previous (dec line))))))
+          subsequent (loop [subsequent []
+                            line (inc line)]
+                       (let [source-line (try (nth source line) (catch Exception e nil))]
+                         (if (or (not source-line) (re-find def-beginning source-line))
+                           subsequent
+                           (recur (conj subsequent source-line) (inc line)))))]
+      {:previous previous
+       :highlight exception-line
+       :subsequent subsequent})
+    (catch Exception e {:highlight "no source found"})))
 
 (defn parse-frame
-  [frame filename locals source]
+  [frame filename locals source-file]
   (println frame)
-  (if-let [[_ namespace f args file line]
+  (if-let [[_ signature method args file line]
            (re-find #"([^ ]+) ([^ ]+) \[(.*)\] (.+):(.+)" frame)]
     (let [args (string/split args #" ")
-          [function method] (string/split f #"\$")]
+          path (string/split signature #"\$")
+          namespace (first path)
+          function (string/join "$" (rest path))
+          line (Integer. line)
+          source-lines (if source-file (string/split source-file #"\n"))
+          source (get-surrounding-def source-lines line)]
       {:namespace namespace
        :function function
        :method method
@@ -45,8 +85,8 @@
 
 (defn make-exception-handler
   [channel port]
-  (fn [{:keys [e stack filenames locals sources]}]
-    (let [event (parse-exception-event e)
+  (fn [{:keys [e thread stack filenames locals sources]}]
+    (let [event (parse-exception-event thread e)
           frames (mapv parse-frame stack filenames locals sources)
           state {:stack frames
                  :exception event

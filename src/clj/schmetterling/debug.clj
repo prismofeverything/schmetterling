@@ -19,6 +19,13 @@
   [filters]
   (apply c/set-catch-exclusion-filter-strings filters))
 
+(defn invoke-remote-method
+  [remote thread method-name args]
+  (let [type (.referenceType remote)
+        methods (.allMethods type)
+        matching (first (drop-while #(not= (.name %) method-name) methods))]
+    (.invokeMethod remote thread matching args 0)))
+
 (defn find-locals
   [thread frame]
   (try
@@ -57,6 +64,7 @@
             locals (map (partial find-locals thread) (range))
             sources (map (partial get-source thread) (range))]
         (handler {:e e
+                  :thread thread
                   :stack stack
                   :filenames filenames
                   :locals locals

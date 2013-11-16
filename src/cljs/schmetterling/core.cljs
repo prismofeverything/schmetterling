@@ -50,7 +50,7 @@
 
 (defn code-template
   [inner]
-  [:pre {:class "brush: clj"} 
+  [:pre {:class "code brush: clj"}
    [:code inner]])
 
 (defn frame-info-template
@@ -63,13 +63,28 @@
      [:span.frame-function "/" (:function frame)])
    [:span.frame-method " " (:method frame)]])
 
+(defn space-padding
+  [s total-spaces]
+  (let [spaces (- total-spaces (count s))
+        padding (repeat spaces " ")]
+    (str s (string/join padding))))
+
+(defn source-template
+  [{:keys [previous highlight subsequent]}]
+  [:span.lines 
+   (string/join "\n" previous) "\n"
+   [:span.highlight (space-padding highlight 50) "\n"]
+   ;; [:span.highlight highlight "\n"]
+   (string/join "\n" subsequent)])
+
 (defn frame-template
   [frame level]
-  ;; (log (:source frame))
   [(frame-tag :div "frame" level)
    (frame-info-template frame)
    [(frame-tag :div "frame-response" level) 
-    [(frame-tag :pre "frame-locals" level) [:code.locals (pr-str (:locals frame))]]]
+    [:span.source (code-template (source-template (:source frame)))]
+    [(frame-tag :pre "frame-locals" level) 
+     [:code.locals (pr-str (:locals frame))]]]
    [(frame-tag :div "frame-eval" level)
     [:pre.prompt ">>> "]
     [(frame-tag :input "frame-input" level) {:type "text"}]]])
@@ -100,8 +115,11 @@
 
 (defn handle-exception
   [{:keys [stack exception] :as data}]
-  (let [frames (stack-template stack exception)]
-    (dom/append! (css/sel "div#stack") (sing/render frames))
+  (let [frames (stack-template stack exception)
+        frames (sing/render frames)]
+    (dom/append! (css/sel "div#stack") frames)
+    (doseq [pre (dom/nodes (css/sel "pre.code"))]
+      (.highlightBlock js/hljs pre))
     (doseq [level (range (count stack))]
       (event-chan 
        send :eval 
