@@ -54,8 +54,13 @@
    [:code inner]])
 
 (defn frame-info-template
-  [frame]
+  [frame level]
   [:div.frame-info
+   [:span.frame-reveal {:id (str "frame-reveal-" level) }
+    [:img.rotate-90 
+     {:id (str "frame-reveal-arrow-" level) 
+      :src "/img/interaction-arrow.png" 
+      :width 15}]]
    "In " [:span.frame-file (or (:filename frame) (:file frame))]
    " line " [:span.frame-line (:line frame)]
    ": " [:span.frame-namespace (:namespace frame)]
@@ -80,14 +85,15 @@
 (defn frame-template
   [frame level]
   [(frame-tag :div "frame" level)
-   (frame-info-template frame)
-   [(frame-tag :div "frame-response" level) 
-    [:span.source (code-template (source-template (:source frame)))]
-    [(frame-tag :pre "frame-locals" level) 
-     [:code.locals (pr-str (:locals frame))]]]
-   [(frame-tag :div "frame-eval" level)
-    [:pre.prompt ">>> "]
-    [(frame-tag :input "frame-input" level) {:type "text"}]]])
+   (frame-info-template frame level)
+   [(frame-tag :div "frame-interaction" level)
+    [(frame-tag :div "frame-response" level) 
+     [:span.source (code-template (source-template (:source frame)))]
+     [(frame-tag :pre "frame-locals" level) 
+      [:code.locals (pr-str (:locals frame))]]]
+    [(frame-tag :div "frame-eval" level)
+     [:pre.prompt ">>> "]
+     [(frame-tag :input "frame-input" level) {:type "text"}]]]])
 
 (defn stack-template
   [stack exception]
@@ -96,7 +102,8 @@
     [:span.exception-announcement "Exception! in "] 
     [:span.exception-class (:class exception)]
     " line " [:span.exception-line (:line exception)]
-    ": " [:span.exception-content (:exception exception)]]
+    ": " [:span.exception-content (:exception exception)]
+    [:span#continue "continue"]]
    [:div#frames 
     (map frame-template stack (range))]])
 
@@ -113,14 +120,30 @@
     (dom/append! (css/sel "div#connection") (sing/render announcement))
     (dom/set-styles! (css/sel "span#connected") {:width 500})))
 
+(defn toggle-prompt
+  [level frame-reveals]
+  (swap! frame-reveals update-in [level] not)
+  (let [reveal (nth @frame-reveals level)
+        interaction (css/sel (str "div#frame-interaction-" level))
+        arrow (css/sel (str "img#frame-reveal-arrow-" level))]
+    (dom/set-styles! interaction {:display (if reveal "block" "none")})
+    ((if reveal dom/add-class! dom/remove-class!) arrow "rotate-180")))
+
 (defn handle-exception
   [{:keys [stack exception] :as data}]
   (let [frames (stack-template stack exception)
-        frames (sing/render frames)]
+        frames (sing/render frames)
+        frame-reveals (atom (vec (repeat (count stack) false)))]
+    (dom/destroy-children! (css/sel "div#stack"))
     (dom/append! (css/sel "div#stack") frames)
     (doseq [pre (dom/nodes (css/sel "pre.code"))]
       (.highlightBlock js/hljs pre))
+    (event-chan send :continue (css/sel "span#continue") :click {})
     (doseq [level (range (count stack))]
+      (events/listen! 
+       (css/sel (str "span#frame-reveal-" level)) :click
+       (fn [e] 
+         (toggle-prompt level frame-reveals)))
       (event-chan 
        send :eval 
        (css/sel (str "input#frame-input-" level))
@@ -143,6 +166,10 @@
   (if (:paused? data)
     (handle-exception data)))
 
+(defn continue
+  [data]
+  (dom/destroy-children! (css/sel "div#stack")))
+
 (defn dispatch-message
   []
   (go
@@ -154,6 +181,8 @@
          :init (init data)
          :connected (announce-connection data)
          :exception (handle-exception data)
+         :continue (continue data)
+         :internal (continue data)
          :eval (print-result data)
          (log (str "op not supported! " data)))))))
 
@@ -166,6 +195,7 @@
      (let [[id event data] (<! send)]
        (log event)
        (condp = id
+         :continue (.send ws {:op :continue})
          :port (if (= 13 (key-code event))
                  (let [port (input-value "input#port")]
                    (.send ws {:op :connect :port port})))

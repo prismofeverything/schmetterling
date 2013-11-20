@@ -23,7 +23,7 @@
   (let [[_ class line] (re-find #".+@(.+):([^ ]+)" (str e))
         exception (.exception e)
         string (debug/invoke-remote-method exception thread "toString" [])
-        value (.value string)]
+        value (if (string? string) string (.value string))]
     {:class class
      :line line
      :exception value}))
@@ -84,7 +84,7 @@
        :line line})))
 
 (defn make-exception-handler
-  [channel port]
+  [channel]
   (fn [{:keys [e thread stack filenames locals sources]}]
     (let [event (parse-exception-event thread e)
           frames (mapv parse-frame stack filenames locals sources)
@@ -99,7 +99,7 @@
   [channel {:keys [port] :as data}]
   (try
     (let [port (Integer. port)]
-      (debug/attach port (make-exception-handler channel port))
+      (debug/attach port (make-exception-handler channel))
       (swap! connection assoc :connected? true :port port)
       {:op :connected
        :port port})
@@ -108,18 +108,32 @@
 (defn init-client
   [channel data]
   (if (:connected? @connection)
-    (debug/set-exception-handler (make-exception-handler channel (:port @connection))))
+    (debug/set-exception-handler (make-exception-handler channel)))
   (httpkit/send! channel (pr-str (assoc @connection :op :init))))
 
 (defn eval-expression
   [channel {:keys [expression level] :as data}]
   (println "eval:" (str data))
-  (let [form (edn/read-string expression) 
-        result (debug/reval form level)]
-    (println "result:" result)
-    (assoc data 
-      :result result
-      :output (with-out-str (pprint/pprint result)))))
+  (try
+    (let [form (edn/read-string expression) 
+          result (debug/reval form level)]
+      (println "result:" result)
+      (assoc data
+        :result result
+        :output (with-out-str (pprint/pprint result))))
+    (catch com.sun.jdi.InternalException e 
+      (do 
+        (debug/continue)
+        {:op :internal}))))
+
+(defn continue
+  [channel data]
+  (let [handler (make-exception-handler channel)]
+    (debug/continue)
+    (debug/set-exception-handler handler)
+    ;; (debug/watch-exceptions handler)
+    (swap! connection select-keys [:connected? :port])
+    {:op :continue}))
 
 (defn dispatch
   [channel data]
@@ -127,6 +141,7 @@
     :init (init-client channel data)
     :connect (connect channel data)
     :eval (eval-expression channel data)
+    :continue (continue channel data)
     {:op :unsupported}))
 
 (defn handler

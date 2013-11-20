@@ -11,6 +11,7 @@
    "clojure.lang.Util"
    "sun.misc.BASE64Decoder"
    "java.lang.Integer"
+   "java.lang.Thread"
    "sun.security.provider.DSA"
    "sun.security.rsa.RSAPadding"
    "sun.security.x509.X509CertImpl"])
@@ -21,10 +22,12 @@
 
 (defn invoke-remote-method
   [remote thread method-name args]
-  (let [type (.referenceType remote)
-        methods (.allMethods type)
-        matching (first (drop-while #(not= (.name %) method-name) methods))]
-    (.invokeMethod remote thread matching args 0)))
+  (try
+    (let [type (.referenceType remote)
+          methods (.allMethods type)
+          matching (first (drop-while #(not= (.name %) method-name) methods))]
+      (.invokeMethod remote thread matching args 0))
+    (catch com.sun.jdi.InternalException ie (format "Exception while invoking remote method! %s" remote))))
 
 (defn find-locals
   [thread frame]
@@ -75,18 +78,28 @@
   [handler]
   (c/set-handler ce/exception-handler (break-on-exception handler)))
 
+(defn watch-exceptions
+  ([handler] (watch-exceptions handler Exception))
+  ([handler pattern] (watch-exceptions handler pattern :all))
+  ([handler pattern occasion]
+     (set-exception-handler handler)
+     (c/set-catch pattern occasion)))
+
 (defn attach
   ([port handler] (attach port handler Exception))
   ([port handler pattern] (attach port handler pattern :all))
   ([port handler pattern occasion]
      (c/cdt-attach port)
      (exclude-exceptions default-exclusions)
-     (set-exception-handler handler)
-     (c/set-catch pattern occasion)))
+     (watch-exceptions handler pattern occasion)))
 
 (defn reval
   [expression frame]
-  (println frame expression)
-  (try 
-    (c/safe-reval (c/ct) frame expression true edn/read-string)
-    (catch Exception e (println e) (.printStackTrace e))))
+  (println "eval: " expression "at frame" frame)
+  (c/safe-reval (c/ct) frame expression true edn/read-string))
+
+(defn continue
+  []
+  (cu/continue-vm))
+  ;; (ce/delete-all-catches)
+  ;; (cu/continue-thread (c/ct)))

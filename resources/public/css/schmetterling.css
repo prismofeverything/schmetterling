@@ -84,6 +84,13 @@ code {
   background-color: #000;
 }
 
+#continue {
+  color: #a11f1f;
+  padding: 3px 10px;
+  margin-left: 15px;
+  background-color: #fff;
+}
+
 .exception {
   padding: 15px;
   /* background: #f28911; */
@@ -106,8 +113,30 @@ code {
   padding-top: 15px;
 }
 
+.rotate-90 {
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+}
+
+.rotate-180 {
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+}
+
+.frame-interaction {
+  display: none;
+}
+
 .frame-info {
-  padding: 0px 15px 15px;
+  padding: 0px 10px 15px;
+}
+
+.frame-reveal {
+  padding: 10px 5px 0px 0px;
 }
 
 .frame-eval {
