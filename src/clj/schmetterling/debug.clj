@@ -3,7 +3,8 @@
             [cdt.ui :as c]
             [cdt.events :as ce]
             [cdt.reval :as cr]
-            [cdt.utils :as cu]))
+            [cdt.utils :as cu]
+            [schmetterling.source :as source]))
 
 (def default-exclusions 
   ["org.h2.*" 
@@ -35,27 +36,6 @@
     (cr/local-names thread frame)
     (catch Exception e [])))
 
-(defn source-path
-  [thread frame]
-  (try
-    (cu/get-source-path thread frame)
-    (catch Exception e nil)))
-
-(defn read-file-from-jar
-  [jar path]
-  (let [zip (java.util.zip.ZipFile. jar)
-        stream (.getInputStream zip (.getEntry zip path))]
-    (slurp stream)))
-
-(defn get-source
-  [thread frame]
-  (try
-    (let [{:keys [jar name]} (cu/get-source thread frame)]
-      (if jar
-        (read-file-from-jar jar name)
-        (slurp name)))
-    (catch Exception e nil)))
-
 (defn break-on-exception
   [handler]
   (fn [e]
@@ -63,9 +43,9 @@
     (try
       (let [thread (ce/get-thread-from-event e)
             stack (c/get-frames thread)
-            filenames (map (partial source-path thread) (range))
+            filenames (map (partial source/source-path thread) (range))
             locals (map (partial find-locals thread) (range))
-            sources (map (partial get-source thread) (range))]
+            sources (map (partial source/get-source-line-reader thread) (range))]
         (handler {:e e
                   :thread thread
                   :stack stack
@@ -101,5 +81,3 @@
 (defn continue
   []
   (cu/continue-vm))
-  ;; (ce/delete-all-catches)
-  ;; (cu/continue-thread (c/ct)))

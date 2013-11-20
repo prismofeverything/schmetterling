@@ -46,7 +46,6 @@ body {
   font-family: verdana;
   background: #aede8a;
   /* background: #b5bd68; */
-
   /* background: a2e35d; */
   /* background: a4e683; */
   /* background: a7cc5e; */
@@ -57,7 +56,6 @@ input {
   font-family: monospace;
   font-size: 13px;
   border: none;
-  /* background: a7cc5e; */
   background-color: #6ec8e6;
   color: #474949;
 }
@@ -93,9 +91,6 @@ code {
 
 .exception {
   padding: 15px;
-  /* background: #f28911; */
-  /* background: #cc3333; */
-  /* background: #bd3c3c; */
   background: #a11f1f;
   color: #ccc;
 }
@@ -106,7 +101,10 @@ code {
 
 .exception-line {
   color: #aede8a;
-  /* color: #8e8; */
+}
+
+.exception-message {
+  color: #aaa;
 }
 
 .frame {
@@ -155,8 +153,6 @@ code {
 
 .frame-file {
   color: #a11f1f;
-  /* color: #963C0F; */
-  /* color: #A67012; */
 }
 
 .frame-line {

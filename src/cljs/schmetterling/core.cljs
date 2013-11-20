@@ -97,15 +97,18 @@
 
 (defn stack-template
   [stack exception]
-  [:div#display
-   [:div.exception
-    [:span.exception-announcement "Exception! in "] 
-    [:span.exception-class (:class exception)]
-    " line " [:span.exception-line (:line exception)]
-    ": " [:span.exception-content (:exception exception)]
-    [:span#continue "continue"]]
-   [:div#frames 
-    (map frame-template stack (range))]])
+  (let [message (:message exception)]
+    [:div#display
+     [:div.exception
+      [:span.exception-announcement "Exception! in "] 
+      [:span.exception-class (:class exception)]
+      " line " [:span.exception-line (:line exception)]
+      ": " [:span.exception-content (:exception exception)]
+      (if message ": ")
+      (if message [:span.exception-message message])
+      [:span#continue "continue"]]
+     [:div#frames 
+      (map frame-template stack (range))]]))
 
 (defn result-template
   [expression result output]
