@@ -1,6 +1,6 @@
-(defproject schmetterling "0.1.0"
-  :description "Web debugger for clojure"
-  :url "http://example.com/FIXME"
+(defproject schmetterling "0.0.3"
+  :description "Web debugger for Clojure"
+  :url "http://github.com/prismofeverything/schmetterling"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
@@ -9,8 +9,8 @@
                  [polaris "0.0.2"]
                  [ring "1.2.0"]
                  [org.clojure/clojurescript "0.0-1909"]
-                 [org.clojars.magomimmo/core.async "0.1.0-SNAPSHOT"]
-                 [domina "1.0.2-SNAPSHOT"]
+                 [org.clojure/core.async "0.1.242.0-44b1e3-alpha"]
+                 [domina "1.0.2"]
                  [com.keminglabs/singult "0.1.6"]
                  [org.clojure/google-closure-library-third-party "0.0-2029"]]
   :plugins [[lein-cljsbuild "0.3.3"]]
@@ -19,7 +19,7 @@
   :min-lein-version "2.0.0"
   :repl-options {:host "localhost"
                  :port 11911}
-  :main schmetterling.core
+  :main schmetterling.server
   :cljsbuild {
     :builds {
       :dev {

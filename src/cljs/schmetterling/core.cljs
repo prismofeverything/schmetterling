@@ -159,6 +159,7 @@
   (let [result-node (result-template expression result output)
         el (css/sel (str "div#frame-response-" level))
         code (sing/render result-node)]
+    (dom/set-value! (css/sel (str "input#frame-input-" level)) "")
     (dom/append! el code)
     (.highlightBlock js/hljs code)))
 
