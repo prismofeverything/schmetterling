@@ -68,6 +68,15 @@ code {
   background: #474949;
   color: #ccc;
   padding: 15px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+#connection-info {
+  /* display: inline-block; */
+  /* padding: 5px 15px; */
 }
 
 #connection input {
@@ -77,9 +86,16 @@ code {
 
 #connected {
   color: #c8d;
+  background-color: #000;
+  /* margin-top: -10px; */
+  /* max-width: 0px; */
+  /* padding-top: 5px; */
+  /* padding-bottom: 5px; */
   padding: 5px 15px;
   margin-left: 5px;
-  background-color: #000;
+  /* display: inline-block; */
+  /* white-space: nowrap; */
+  /* overflow: hidden; */
 }
 
 #continue {
@@ -89,10 +105,26 @@ code {
   background-color: #fff;
 }
 
+#stack {
+  overflow: scroll;
+}
+
+#frames {
+  padding-top: 99px;
+  position: absolute;
+  right: 0;
+  left: 0;
+}
+
 .exception {
   padding: 15px;
   background: #a11f1f;
   color: #ccc;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  top: 53px;
 }
 
 .exception-class {

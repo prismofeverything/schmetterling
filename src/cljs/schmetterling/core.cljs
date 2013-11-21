@@ -95,20 +95,22 @@
      [:pre.prompt ">>> "]
      [(frame-tag :input "frame-input" level) {:type "text"}]]]])
 
-(defn stack-template
-  [stack exception]
+(defn exception-template
+  [exception]
   (let [message (:message exception)]
-    [:div#display
-     [:div.exception
-      [:span.exception-announcement "Exception! in "] 
-      [:span.exception-class (:class exception)]
-      " line " [:span.exception-line (:line exception)]
-      ": " [:span.exception-content (:exception exception)]
-      (if message ": ")
-      (if message [:span.exception-message message])
-      [:span#continue "continue"]]
-     [:div#frames 
-      (map frame-template stack (range))]]))
+    [:div.exception
+     [:span.exception-announcement "Exception! in "] 
+     [:span.exception-class (:class exception)]
+     " line " [:span.exception-line (:line exception)]
+     ": " [:span.exception-content (:exception exception)]
+     (if message ": ")
+     (if message [:span.exception-message message])
+     [:span#continue "continue"]]))
+
+(defn stack-template
+  [stack]
+  [:div#frames 
+   (map frame-template stack (range))])
 
 (defn result-template
   [expression result output]
@@ -121,7 +123,34 @@
   (let [announcement [:span#connected (str "connected on port " (:port data))]]
     (dom/set-value! (css/sel "input#port") (:port data))
     (dom/append! (css/sel "div#connection") (sing/render announcement))
-    (dom/set-styles! (css/sel "span#connected") {:width 500})))
+    (dom/set-styles! (css/sel "span#connected") {:opacity 0})
+    (js/TweenMax.to (dom/single-node (css/sel "span#connected")) 0.4 (js-obj "opacity" 1.0 "delay" 0.4))))
+
+(defn element-width
+  [el]
+  (.-width (js/goog.style.getSize (dom/single-node el))))
+
+(defn element-height
+  [el]
+  (.-height (js/goog.style.getSize (dom/single-node el))))
+
+(defn viewport-to-bottom
+  [el]
+  (let [inner (dom/single-node el) 
+        viewport (.-innerHeight js/window)
+        page-top (js/goog.style.getPageOffsetTop inner)
+        height (.-height (js/goog.style.getSize inner))]
+    (- (+ page-top height) viewport)))
+
+(defn scroll-to-bottom
+  [el]
+  (let [viewport-top (viewport-to-bottom el)]
+    (js/window.scrollTo 0 viewport-top)))
+
+(defn animate-scroll
+  [y]
+  (let [y (if (< y 0) 0 y)]
+    (js/TweenMax.to js/document.body 0.3 (js-obj "scrollTop" y))))
 
 (defn toggle-prompt
   [level frame-reveals]
@@ -130,15 +159,22 @@
         interaction (css/sel (str "div#frame-interaction-" level))
         arrow (css/sel (str "img#frame-reveal-arrow-" level))]
     (dom/set-styles! interaction {:display (if reveal "block" "none")})
+    (if reveal (animate-scroll (viewport-to-bottom interaction)))
     ((if reveal dom/add-class! dom/remove-class!) arrow "rotate-180")))
 
 (defn handle-exception
   [{:keys [stack exception] :as data}]
-  (let [frames (stack-template stack exception)
-        frames (sing/render frames)
+  (let [exception (sing/render (exception-template exception))
+        frames (sing/render (stack-template stack))
+        frames-height (element-height frames)
         frame-reveals (atom (vec (repeat (count stack) false)))]
     (dom/destroy-children! (css/sel "div#stack"))
+    (dom/append! (css/sel "div#stack") exception)
     (dom/append! (css/sel "div#stack") frames)
+    (dom/set-styles! exception {:top 0})
+    (dom/set-styles! frames {:left (* -1 (element-width (css/sel "div#frames")))})
+    (js/TweenMax.to (dom/single-node exception) 0.6 (js-obj "top" 53 "delay" 1))
+    (js/TweenMax.to (dom/single-node frames) 0.8 (js-obj "left" 0 "delay" 0.9))
     (doseq [pre (dom/nodes (css/sel "pre.code"))]
       (.highlightBlock js/hljs pre))
     (event-chan send :continue (css/sel "span#continue") :click {})
@@ -161,7 +197,8 @@
         code (sing/render result-node)]
     (dom/set-value! (css/sel (str "input#frame-input-" level)) "")
     (dom/append! el code)
-    (.highlightBlock js/hljs code)))
+    (.highlightBlock js/hljs code)
+    (animate-scroll (viewport-to-bottom (css/sel (str "div#frame-interaction-" level))))))
 
 (defn init
   [data]
@@ -231,3 +268,4 @@
   (set! (.-onload js/window) init!))
 
 (connect/connect)
+

@@ -20,12 +20,13 @@
   :repl-options {:host "localhost"
                  :port 11911}
   :main schmetterling.server
-  :cljsbuild {
-    :builds {
-      :dev {
-        :libs ["singult"]
-        :source-paths ["src/cljs"]  
-        :compiler {
-          :optimizations :whitespace
-          :output-to  "resources/public/js/app/schmetterling.js"
-          :output-dir "resources/public/js/app/out"}}}})
+  :cljsbuild 
+  {:builds 
+   {:dev 
+    {:libs ["singult"]
+     :source-paths ["src/cljs"]  
+     :compiler 
+     {:externs ["resources/public/js/externs/greensock.externs.js"]
+      :optimizations :whitespace
+      :output-to  "resources/public/js/app/schmetterling.js"
+      :output-dir "resources/public/js/app/out"}}}})

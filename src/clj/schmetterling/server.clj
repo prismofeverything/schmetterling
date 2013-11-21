@@ -11,7 +11,10 @@
             [schmetterling.debug :as debug]))
 
 (def clients (atom []))
-(def connection (atom {:connected? false}))
+(def connection 
+  (atom 
+   {:connected? false
+    :history []}))
 
 (defn index
   [request]
