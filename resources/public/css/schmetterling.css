@@ -116,7 +116,7 @@ code {
   left: 0;
 }
 
-.exception {
+#exception {
   padding: 15px;
   background: #a11f1f;
   color: #ccc;

@@ -21,6 +21,38 @@
   [e]
   (.log js/console e))
 
+(def history 
+  (atom 
+   {:stack [] 
+    :index 0}))
+
+(defn add-to-history
+  [expression]
+  (swap! history update-in [:stack] conj expression)
+  (let [index (-> @history :stack count)]
+    (swap! history update-in [:index] (constantly index))))
+
+(defn history-dec
+  [index]
+  (let [up (dec index)]
+    (if (< up 0) 0 up)))
+
+(defn history-inc
+  [top index]
+  (if (>= index top) index (inc index)))
+
+(defn traverse-history
+  [direction]
+  (if (= :up direction)
+    (do 
+      (swap! history update-in [:index] history-dec)
+      (let [{:keys [index stack]} @history]
+        (nth stack index)))
+    (let [top (-> @history :stack count)]
+      (swap! history update-in [:index] (partial history-inc top))
+      (let [{:keys [index stack]} @history]
+        (if (>= index (count stack)) "" (nth stack index))))))
+
 (defn event-chan
   [c id el type data]
   (let [writer #(put! c [id % data])]
@@ -31,10 +63,6 @@
 (defn key-code
   [event]
   (.-keyCode (events/raw-event event)))
-
-(defn key-press?
-  [event]
-  (= (events/event-type event) "keypress"))
 
 (defn input-value
   [input]
@@ -98,7 +126,7 @@
 (defn exception-template
   [exception]
   (let [message (:message exception)]
-    [:div.exception
+    [:div#exception
      [:span.exception-announcement "Exception! in "] 
      [:span.exception-class (:class exception)]
      " line " [:span.exception-line (:line exception)]
@@ -186,12 +214,10 @@
       (event-chan 
        send :eval 
        (css/sel (str "input#frame-input-" level))
-       :keypress {:level level}))))
+       :keydown {:level level}))))
 
 (defn print-result
   [{:keys [expression level result output] :as data}]
-  (log result)
-  (log output)
   (let [result-node (result-template expression result output)
         el (css/sel (str "div#frame-response-" level))
         code (sing/render result-node)]
@@ -202,6 +228,8 @@
 
 (defn init
   [data]
+  (let [expressions (:history data)]
+    (swap! history assoc :stack expressions :index (count expressions)))
   (if (:connected? data)
     (announce-connection data))
   (if (:paused? data)
@@ -209,7 +237,15 @@
 
 (defn continue
   [data]
-  (dom/destroy-children! (css/sel "div#stack")))
+  (let [exception (css/sel "div#exception") 
+        frames (css/sel "div#frames")]
+    (dom/set-styles! (css/sel "div.frame-interaction") {:display "none"})
+    (js/TweenMax.to (dom/single-node exception) 0.6 (js-obj "top" 0))
+    (js/TweenMax.to 
+     (dom/single-node frames) 0.8 
+     (js-obj 
+      "left" (* -1 (element-width (css/sel "div#frames")))
+      "onComplete" #(dom/destroy-children! (css/sel "div#stack"))))))
 
 (defn dispatch-message
   []
@@ -227,6 +263,8 @@
          :eval (print-result data)
          (log (str "op not supported! " data)))))))
 
+(def key-code-map {38 :up 40 :down})
+
 (defn make-sender
   []
   (log "HELLO")
@@ -234,19 +272,26 @@
   (go
    (while true
      (let [[id event data] (<! send)]
-       (log event)
        (condp = id
          :continue (.send ws {:op :continue})
          :port (if (= 13 (key-code event))
                  (let [port (input-value "input#port")]
                    (.send ws {:op :connect :port port})))
-         :eval (if (= 13 (key-code event)) 
-                 (let [level (:level data)
-                       el (str "input#frame-input-" level)
-                       expression (input-value el)]
-                   (.send ws {:op :eval 
-                              :level level 
-                              :expression expression}))))))))
+         :eval (let [code (key-code event)] 
+                 (cond 
+                  (or (= 40 code) (= 38 code))
+                  (let [expression (traverse-history (get key-code-map code))
+                        level (:level data)]
+                    (dom/set-value! (css/sel (str "input#frame-input-" level)) expression))
+
+                  (= 13 code) 
+                  (let [level (:level data)
+                        el (str "input#frame-input-" level)
+                        expression (input-value el)]
+                    (add-to-history expression)
+                    (.send ws {:op :eval 
+                               :level level 
+                               :expression expression})))))))))
 
 (defn make-receiver []
   (set! 

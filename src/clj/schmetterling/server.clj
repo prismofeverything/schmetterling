@@ -87,8 +87,9 @@
   [channel {:keys [expression level] :as data}]
   (println "eval:" (str data))
   (try
-    (let [form (edn/read-string expression) 
+    (let [form (edn/read-string expression)
           result (debug/reval form level)]
+      (swap! connection update-in [:history] conj form)
       (println "result:" result)
       (assoc data
         :result result
@@ -103,8 +104,7 @@
   (let [handler (make-exception-handler channel)]
     (debug/continue)
     (debug/set-exception-handler handler)
-    ;; (debug/watch-exceptions handler)
-    (swap! connection select-keys [:connected? :port])
+    (swap! connection select-keys [:connected? :port :history])
     {:op :continue}))
 
 (defn dispatch
