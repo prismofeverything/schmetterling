@@ -39,6 +39,8 @@ evaluate them in the context of the frozen process.  You can navigate your
 expression history with the up and down arrows.  When you are done you can click
 the white "continue" button to resume the frozen process.
 
+![stacktrace](https://raw.github.com/prismofeverything/schmetterling/master/screenshot.png)
+
 ### Triggering Schmetterling Manually
 
 If you add Schmetterling as a dependency, you can trigger the debugger from your code.
