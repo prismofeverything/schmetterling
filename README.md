@@ -39,7 +39,7 @@ evaluate them in the context of the frozen process.  You can navigate your
 expression history with the up and down arrows.  When you are done you can click
 the white "continue" button to resume the frozen process.
 
-![stacktrace](https://raw.github.com/prismofeverything/schmetterling/master/screenshot.png)
+![stacktrace](https://raw.github.com/prismofeverything/schmetterling/master/stacktrace.png)
 
 ### Triggering Schmetterling Manually
 
