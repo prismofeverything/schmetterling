@@ -39,6 +39,28 @@ evaluate them in the context of the frozen process.  You can navigate your
 expression history with the up and down arrows.  When you are done you can click
 the white "continue" button to resume the frozen process.
 
+### Triggering Schmetterling Manually
+
+If you add Schmetterling as a dependency, you can trigger the debugger from your code.
+
+Add the dependency in your project.clj:
+
+    [schmetterling "0.0.4"]
+    
+Then from your code:
+
+    (ns bad.code
+      (:use [schmetterling.core :only (debugger)]))
+      
+    (defn destroy-everything
+      []
+      (let [a 0 b 1]
+        (debugger)  ;; <-- This will trigger Schmetterling
+        (/ b a)))
+
+The stacktrace will appear in your Schmetterling tab, and hopefully you can fix
+this egregious mistake.
+
 ## Caveats
 
 Schmetterling uses java debugging tools, so you must have the JDK installed, not
@@ -48,13 +70,14 @@ just the JRE.  If you get an exception like:
     
 You will know you have failed.
 
-Also, if you trigger an exception in the process being debugged (by a mistyping a local or
-just a compounding error) this creates a paradox in spacetime where it cannot
-resolve the exception since you are already paused for an exception (I call this
-exinception).  If this happens you will have to restart Schmetterling, and
-possibly the frozen process as well.  
+Also, if you trigger an exception in the process being debugged (by a mistyping
+a local or just a compounding error) this creates a paradox in spacetime where
+it cannot resolve the exception since you are already paused for an exception (I
+call this exinception).  If this happens you will have to restart Schmetterling,
+and possibly the frozen process as well.
 
-If you find a way around this let me know, but as far as I can tell don't do this.
+If you find a way around this let me know, but as far as I can tell don't do
+this.
 
 ## License
 
