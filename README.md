@@ -63,7 +63,7 @@ Then from your code:
 ```
 
 The stacktrace will appear in your Schmetterling tab, and hopefully you can fix
-this egregious mistake.
+this egregious violation of universal law.
 
 ## Caveats
 
@@ -77,8 +77,8 @@ You will know you have failed.
 Also, if you trigger an exception in the process being debugged (by a mistyping
 a local or just a compounding error) this creates a paradox in spacetime where
 it cannot resolve the exception since you are already paused for an exception (I
-call this exinception).  If this happens you will have to restart Schmetterling,
-and possibly the frozen process as well.
+call this act "exinception").  If this happens you will have to restart
+Schmetterling, and possibly the frozen process as well.
 
 If you find a way around this let me know, but as far as I can tell don't do
 this.
