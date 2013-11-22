@@ -1,10 +1,10 @@
-(defproject schmetterling "0.0.3"
+(defproject schmetterling "0.0.4"
   :description "Web debugger for Clojure"
   :url "http://github.com/prismofeverything/schmetterling"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [prismofeverything/cdt "1.2.6.3"]
+                 [prismofeverything/cdt "1.2.6.4"]
                  [http-kit "2.1.12"]
                  [polaris "0.0.2"]
                  [ring "1.2.0"]

@@ -47,7 +47,7 @@
     (do 
       (swap! history update-in [:index] history-dec)
       (let [{:keys [index stack]} @history]
-        (nth stack index)))
+        (if (> (count stack) 0) (nth stack index) "")))
     (let [top (-> @history :stack count)]
       (swap! history update-in [:index] (partial history-inc top))
       (let [{:keys [index stack]} @history]
@@ -107,7 +107,6 @@
   [:span.lines 
    (string/join "\n" previous) "\n"
    [:span.highlight (space-padding highlight 50) "\n"]
-   ;; [:span.highlight highlight "\n"]
    (string/join "\n" subsequent)])
 
 (defn frame-template

@@ -19,7 +19,11 @@
 
 (defn exclude-exceptions
   [filters]
-  (apply c/set-catch-exclusion-filter-strings filters))
+  (apply ce/add-catch-exclusion-filter-strings filters))
+
+(defn clear-exclusions
+  []
+  (ce/remove-catch-exclusion-filter-strings))
 
 (defn invoke-remote-method
   [remote thread method-name args]
