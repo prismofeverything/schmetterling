@@ -45,18 +45,22 @@ If you add Schmetterling as a dependency, you can trigger the debugger from your
 
 Add the dependency in your project.clj:
 
-    [schmetterling "0.0.4"]
-    
+```clj
+[schmetterling "0.0.4"]
+```    
+
 Then from your code:
 
-    (ns bad.code
-      (:use [schmetterling.core :only (debugger)]))
-      
-    (defn destroy-everything
-      []
-      (let [a 0 b 1]
-        (debugger)  ;; <-- This will trigger Schmetterling
-        (/ b a)))
+```clj
+(ns bad.code
+  (:use [schmetterling.core :only (debugger)]))
+  
+(defn destroy-everything
+  []
+  (let [a 0 b 1]
+    (debugger)  ;; <-- This will trigger Schmetterling
+    (/ b a)))
+```
 
 The stacktrace will appear in your Schmetterling tab, and hopefully you can fix
 this egregious mistake.
