@@ -153,7 +153,21 @@
   (-> (polaris/router routes)
       (wrap-resource "public")
       (wrap-reload)))
-   
-(defn -main 
+
+(def cli-options
+  ;; An option with a required argument
+  [["-p" "--port PORT" "Port number"
+    :default 16461
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+   ["-i" "--ip HOST_IP" "IP address to bind http server to"
+    :default "127.0.0.1"]
+    ["-h" "--help"]])
+
+(defn -main
   [& args]
-  (httpkit/run-server #'app {:port 16461}))
+  (let [args (parse-opts args cli-options)
+        {:keys [ip port help]} (:options args)
+        ]
+    (printf "\nLaunching server at: http://%s:%d\n" ip port)
+    (httpkit/run-server #'app {:ip ip :port port })))
