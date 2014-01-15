@@ -70,11 +70,15 @@ this egregious violation of universal law.
 ## Caveats
 
 Schmetterling uses java debugging tools, so you must have the JDK installed, not
-just the JRE.  If you get an exception like:
+just the JRE.  Also, it seems on Java 7 this jar is no longer in the classpath.
+If you get an exception like:
 
     Exception in thread "main" java.lang.ClassNotFoundException: com.sun.jdi.Bootstrap
     
-You will know you have failed.
+you will have to set an environment variable that points Schmetterling at the
+current location of your tools.jar:
+
+    export JAVA_TOOLS_JAR=/path/to/tools/jar/on/your/system/tools.jar
 
 Also, if you trigger an exception in the process being debugged (by a mistyping
 a local or just a compounding error) this creates a paradox in spacetime where
