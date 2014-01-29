@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.pprint :as pprint]
+            [clojure.tools.cli :as cli]
             [org.httpkit.server :as httpkit] 
             [polaris.core :as polaris]
             [schmetterling.source :as source]
@@ -153,9 +154,20 @@
   (-> (polaris/router routes)
       (wrap-resource "public")
       (wrap-reload)))
-   
-(defn -main 
+
+(def cli-options
+  [["-p" "--port PORT" "port number"
+    :default 16461
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 0x10000) "must be a number between 0 and 65536"]]
+   ["-i" "--ip HOST_IP" "IP address to bind http server to"
+    :default "127.0.0.1"]
+   ["-h" "--help"]])
+
+(defn -main
   [& args]
-  (let [port (Integer. (or (first args) 16461))]
-    (println (format "schmetterling started on port %s" port))
-    (httpkit/run-server #'app {:port port})))
+  (let [args (cli/parse-opts args cli-options)
+        {:keys [ip port help]} (:options args)]
+    (printf "schmetterling started at http://%s:%d\n" ip port)
+    (httpkit/run-server #'app {:ip ip :port port})))
+
