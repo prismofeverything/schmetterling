@@ -1,7 +1,7 @@
 # schmetterling
 
 <p align="center">
-![schmetterling](https://raw.github.com/prismofeverything/schmetterling/master/schmetterling.png)
+  <img alt="schmetterling" src="https://raw.github.com/prismofeverything/schmetterling/master/schmetterling.png" />
 </p>
 
 Debug running clojure processes from the browser!
