@@ -156,4 +156,6 @@
    
 (defn -main 
   [& args]
-  (httpkit/run-server #'app {:port 16461}))
+  (let [port (Integer. (or (first args) 16461))]
+    (println (format "schmetterling started on port %s" port))
+    (httpkit/run-server #'app {:port port})))
