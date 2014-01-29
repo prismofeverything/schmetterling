@@ -12,6 +12,7 @@
                  [org.clojure/core.async "0.1.242.0-44b1e3-alpha"]
                  [domina "1.0.2"]
                  [com.keminglabs/singult "0.1.6"]
+                 [org.clojure/tools.cli "0.3.1"]
                  [org.clojure/google-closure-library-third-party "0.0-2029"]]
   :plugins [[lein-cljsbuild "0.3.3"]]
   :source-paths ["src/clj"]
