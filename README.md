@@ -1,5 +1,7 @@
 # schmetterling
 
+![schmetterling](https://raw.github.com/prismofeverything/schmetterling/master/schmetterling.png)
+
 Debug running clojure processes from the browser!
 
 ## Usage
