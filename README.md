@@ -1,8 +1,8 @@
-# schmetterling
-
 <p align="center">
   <img alt="schmetterling" src="https://raw.github.com/prismofeverything/schmetterling/master/schmetterling.png" />
 </p>
+
+# schmetterling
 
 Debug running clojure processes from the browser!
 
