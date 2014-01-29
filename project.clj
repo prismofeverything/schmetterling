@@ -1,4 +1,4 @@
-(defproject schmetterling "0.0.5"
+(defproject schmetterling "0.0.6"
   :description "Web debugger for Clojure"
   :url "http://github.com/prismofeverything/schmetterling"
   :license {:name "Eclipse Public License"
