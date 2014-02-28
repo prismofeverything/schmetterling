@@ -52,7 +52,7 @@ If you add Schmetterling as a dependency, you can trigger the debugger from your
 Add the dependency in your project.clj:
 
 ```clj
-[schmetterling "0.0.4"]
+[schmetterling "0.0.7"]
 ```    
 
 Then from your code:
