@@ -22,7 +22,7 @@
   :min-lein-version "2.0.0"
   :repl-options {:host "localhost"
                  :port 11911}
-  :main schmetterling.server
+  :main ^:skip-aot schmetterling.server
   :cljsbuild 
   {:builds 
    {:dev 
