@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [prismofeverything/cdt "1.2.6.4"]
                  [http-kit "2.1.19"]
-                 [polaris "0.0.15"]
+                 [polaris "0.0.16"]
                  [ring "1.3.2"]
                  [org.clojure/clojurescript "0.0-3211"]
                  [org.clojure/core.async "0.1.242.0-44b1e3-alpha"]
