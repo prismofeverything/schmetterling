@@ -1,5 +1,5 @@
 (ns schmetterling.core
-  (:require 
+  (:require
    [clojure.string :as string]
    [cljs.core.async :refer [chan <! >! put!]]
    [cljs.reader :as reader]
@@ -8,7 +8,7 @@
    [domina.events :as events]
    [singult.core :as sing]
    [schmetterling.connect :as connect])
-  (:require-macros 
+  (:require-macros
    [cljs.core.async.macros :refer [go]]))
 
 (def send (chan))
@@ -21,9 +21,9 @@
   [e]
   (.log js/console e))
 
-(def history 
-  (atom 
-   {:stack [] 
+(def history
+  (atom
+   {:stack []
     :index 0}))
 
 (defn add-to-history
@@ -85,9 +85,9 @@
   [frame level]
   [:div.frame-info
    [:span.frame-reveal {:id (str "frame-reveal-" level) }
-    [:img.rotate-90 
-     {:id (str "frame-reveal-arrow-" level) 
-      :src "/img/interaction-arrow.png" 
+    [:img.rotate-90
+     {:id (str "frame-reveal-arrow-" level)
+      :src "/img/interaction-arrow.png"
       :width 15}]]
    "In " [:span.frame-file (or (:filename frame) (:file frame))]
    " line " [:span.frame-line (:line frame)]
@@ -104,7 +104,7 @@
 
 (defn source-template
   [{:keys [previous highlight subsequent]}]
-  [:span.lines 
+  [:span.lines
    (string/join "\n" previous) "\n"
    [:span.highlight (space-padding highlight 50) "\n"]
    (string/join "\n" subsequent)])
@@ -114,9 +114,9 @@
   [(frame-tag :div "frame" level)
    (frame-info-template frame level)
    [(frame-tag :div "frame-interaction" level)
-    [(frame-tag :div "frame-response" level) 
+    [(frame-tag :div "frame-response" level)
      [:span.source (code-template (source-template (:source frame)))]
-     [(frame-tag :pre "frame-locals" level) 
+     [(frame-tag :pre "frame-locals" level)
       [:code.locals (pr-str (:locals frame))]]]
     [(frame-tag :div "frame-eval" level)
      [:pre.prompt ">>> "]
@@ -126,7 +126,7 @@
   [exception]
   (let [message (:message exception)]
     [:div#exception
-     [:span.exception-announcement "Exception! in "] 
+     [:span.exception-announcement "Exception! in "]
      [:span.exception-class (:class exception)]
      " line " [:span.exception-line (:line exception)]
      ": " [:span.exception-content (:exception exception)]
@@ -136,7 +136,7 @@
 
 (defn stack-template
   [stack]
-  [:div#frames 
+  [:div#frames
    (map frame-template stack (range))])
 
 (defn result-template
@@ -163,7 +163,7 @@
 
 (defn viewport-to-bottom
   [el]
-  (let [inner (dom/single-node el) 
+  (let [inner (dom/single-node el)
         viewport (.-innerHeight js/window)
         page-top (js/goog.style.getPageOffsetTop inner)
         height (.-height (js/goog.style.getSize inner))]
@@ -206,12 +206,12 @@
       (.highlightBlock js/hljs pre))
     (event-chan send :continue (css/sel "span#continue") :click {})
     (doseq [level (range (count stack))]
-      (events/listen! 
+      (events/listen!
        (css/sel (str "span#frame-reveal-" level)) :click
-       (fn [e] 
+       (fn [e]
          (toggle-prompt level frame-reveals)))
-      (event-chan 
-       send :eval 
+      (event-chan
+       send :eval
        (css/sel (str "input#frame-input-" level))
        :keydown {:level level}))))
 
@@ -236,13 +236,13 @@
 
 (defn continue
   [data]
-  (let [exception (css/sel "div#exception") 
+  (let [exception (css/sel "div#exception")
         frames (css/sel "div#frames")]
     (dom/set-styles! (css/sel "div.frame-interaction") {:display "none"})
     (js/TweenMax.to (dom/single-node exception) 0.6 (js-obj "top" 0))
-    (js/TweenMax.to 
-     (dom/single-node frames) 0.8 
-     (js-obj 
+    (js/TweenMax.to
+     (dom/single-node frames) 0.8
+     (js-obj
       "left" (* -1 (element-width (css/sel "div#frames")))
       "onComplete" #(dom/destroy-children! (css/sel "div#stack"))))))
 
@@ -276,30 +276,30 @@
          :port (if (= 13 (key-code event))
                  (let [port (input-value "input#port")]
                    (.send ws {:op :connect :port port})))
-         :eval (let [code (key-code event)] 
-                 (cond 
+         :eval (let [code (key-code event)]
+                 (cond
                   (or (= 40 code) (= 38 code))
                   (let [expression (traverse-history (get key-code-map code))
                         level (:level data)]
                     (dom/set-value! (css/sel (str "input#frame-input-" level)) expression))
 
-                  (= 13 code) 
+                  (= 13 code)
                   (let [level (:level data)
                         el (str "input#frame-input-" level)
                         expression (input-value el)]
                     (add-to-history expression)
-                    (.send ws {:op :eval 
-                               :level level 
+                    (.send ws {:op :eval
+                               :level level
                                :expression expression})))))))))
 
 (defn make-receiver []
-  (set! 
+  (set!
    (.-onmessage ws)
    (fn [msg]
      (put! receive msg)))
   (set!
    (.-onopen ws)
-   (fn [msg] 
+   (fn [msg]
      (.send ws {:op :init})))
   (dispatch-message))
 
