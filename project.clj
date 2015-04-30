@@ -12,8 +12,7 @@
                  [org.clojure/core.async "0.1.242.0-44b1e3-alpha"]
                  [domina "1.0.3"]
                  [com.keminglabs/singult "0.1.6"]
-                 [org.clojure/tools.cli "0.3.1"]
-                 [org.clojure/google-closure-library-third-party "0.0-20140226-71326067"]]
+                 [org.clojure/tools.cli "0.3.1"]]
   :plugins [[lein-cljsbuild "1.0.5"]]
   :source-paths ["src/clj"]
   :resource-paths ~(if-let [tools (System/getenv "JAVA_TOOLS_JAR")]
@@ -29,7 +28,7 @@
     {:libs ["singult"]
      :source-paths ["src/cljs"]
      :compiler
-     {:externs ["resources/public/js/externs/greensock.externs.js"]
-      :optimizations :whitespace
-      :output-to  "resources/public/js/app/schmetterling.js"
-      :output-dir "resources/public/js/app/out"}}}})
+      {:externs ["resources/public/js/externs/greensock.externs.js"]
+       :optimizations :whitespace
+       :output-to  "resources/public/js/app/schmetterling.js"
+       :output-dir "resources/public/js/app/out"}}}})
